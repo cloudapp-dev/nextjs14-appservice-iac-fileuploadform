@@ -3,89 +3,87 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import LoadingButton from "@/components/tools/loadingbutton/loadingbutton.component";
 import FileUploader from "@/components/azure/storageaccounts/fileuploader.component";
+import getStripe from "@/lib/get-stripe";
+import { useRouter, useSearchParams } from "next/navigation";
 
-// Utility function to generate a random alphanumeric string of a specified length
+// Utility function to generate a random alphanumeric string
 const generateRandomName = (length: number) => {
   const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
+  return Array.from({ length }, () =>
+    characters.charAt(Math.floor(Math.random() * characters.length))
+  ).join("");
 };
-
-// const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const CreateStorageAccountFormAppService: React.FC = () => {
   const { data: session } = useSession();
   const user_az_id = session?.user?.sub;
   const user_email = session?.user?.email;
-
-  //Get Access Token
   const token = session?.accessToken;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const session_id = searchParams.get("session_id");
 
   const [resourceGroupName, setResourceGroupName] = useState(
     generateRandomName(24)
-  ); // Random default value
-  const [accountName, setAccountName] = useState(generateRandomName(24)); // Random default value
-  const [location, setLocation] = useState("westeurope"); // Default to "westeurope"
-  const [tags, setTags] = useState<{ [key: string]: string }>({
+  );
+  const [accountName, setAccountName] = useState(generateRandomName(24));
+  const [location, setLocation] = useState("westeurope");
+  const [tags, setTags] = useState({
     env: "production",
     user: user_az_id || "",
-  }); // Default value with example tag
-  const [containerName, setContainerName] = useState("mycontainer"); // Default value
+  });
+  const [containerName, setContainerName] = useState("mycontainer");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [storageAccountName, setStorageAccountName] = useState(""); // State to store storage account name
-  const [accessKey, setAccessKey] = useState(""); // State to store access key
-  const [containers, setContainers] = useState<string[]>([]); // State to store fetched containers
-  const [azureops, setAzureOps] = useState(""); // State for Azure Operations
-  const [hasStorageAccount, setHasStorageAccount] = useState(false); // State to check if user already has a storage account
+  const [storageAccountName, setStorageAccountName] = useState("");
+  const [accessKey, setAccessKey] = useState("");
+  const [containers, setContainers] = useState<string[]>([]);
+  const [hasStorageAccount, setHasStorageAccount] = useState(false);
+  const [paid, setPaid] = useState(false); // Tracks payment status
+  const [azureOps, setAzureOps] = useState(""); // Tracks long-running operations (e.g., "create", "delete")
+  const [showModal, setShowModal] = useState(false); // Tracks modal visibility
 
-  // Function to check if user already has a storage account
+  // Function to check if the user has already paid
+  const checkPaymentStatus = async () => {
+    const res = await fetch("/api/stripe/check-payment-status");
+    const data = await res.json();
+    console.log("Payment status:", data.paid);
+    setPaid(data.paid);
+  };
+
+  // Function to check if the user already has a storage account
   const checkIfUserHasStorageAccount = async () => {
-    if (!user_az_id) return; // No user ID available
-
+    if (!user_az_id) return;
     try {
       const response = await fetch(
         "/api/azure/storageaccount/check-storage-account",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: user_az_id }),
         }
       );
-
       if (response.ok) {
-        const data: {
-          hasStorageAccount: boolean;
-          storageAccountName: string;
-          accessKey: string;
-          containerName: string;
-          resourceGroupName: string;
-        } = await response.json();
-        // setHasStorageAccount(data.hasStorageAccount);
+        const data = await response.json();
         setHasStorageAccount(data.storageAccountName !== "");
         setStorageAccountName(data.storageAccountName);
         setAccessKey(data.accessKey);
         setContainerName(data.containerName || "mycontainer");
         setResourceGroupName(data.resourceGroupName);
-        // console.log("resourceGroupName:", data.resourceGroupName);
-      } else {
-        console.error("Error checking storage account existence.");
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error checking storage account existence:", error);
     }
   };
 
+  // Function to fetch the operation status (for long-running processes like creation or deletion)
   // Funktion zum Abrufen des Werts aus der Datenbank
   const fetchData = async () => {
     try {
-      const operation = azureops;
+      const operation = azureOps;
       const value = "status";
+
+      // console.log("Operation: ", operation);
 
       const responseOps = await fetch("/api/azure/resources/manageoperations", {
         method: "POST",
@@ -101,16 +99,19 @@ const CreateStorageAccountFormAppService: React.FC = () => {
 
       const data = await responseOps.json();
 
-      if (azureops === "create") {
-        console.log("Data: ", data.data.creation);
+      // console.log("FetchData: ", data);
+      // console.log("resourceGroupName: ", resourceGroupName);
+
+      if (azureOps === "create") {
+        // console.log("Data: ", data.data.creation);
         if (data.data.creation === "Success") {
           setMessage("Storage account created successfully!");
           setHasStorageAccount(true); // Update the state to reflect the creation
           setLoading(false);
         }
       }
-      if (azureops === "delete") {
-        console.log("Data: ", data.data.deletion);
+      if (azureOps === "delete") {
+        // console.log("Data: ", data.data.deletion);
         if (data.data.deletion === "Success") {
           setMessage("Storage account successfully deleted!");
           setHasStorageAccount(false); // Update the state to reflect the creation
@@ -122,89 +123,28 @@ const CreateStorageAccountFormAppService: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    checkIfUserHasStorageAccount();
-  }, [session]);
-
-  // Überwacht Datenbankwertänderungen
-  useEffect(() => {
-    // Datenbankabfrage alle 5 Sekunden
-    if (loading === false) return; // Nur abfragen, wenn der Ladezustand true ist
-    const intervalId = setInterval(fetchData, 5000);
-
-    return () => clearInterval(intervalId); // Bereinigen, wenn die Komponente unmontiert wird
-  }, [loading === true]);
-
-  // Delete storage account
-
-  const handleDeleteStorageAccount = async () => {
-    if (!accountName) return; // No storage account name available
-
-    // Check if user has a storage account and get Resource Group Name
-    checkIfUserHasStorageAccount();
-
-    // console.log("Deleting resourceGroup:", resourceGroupName);
-
-    setLoading(true);
-    setMessage("");
-    setAzureOps("delete");
-
-    try {
-      // Creating Records in Operationstable
-      const operation = "delete";
-      const value = "pending";
-
-      // Call the function to create a record in the operation table
-      const responseOps = await fetch("/api/azure/resources/manageoperations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          resourceGroupName,
-          operation,
-          value,
-        }),
-      });
-
-      const response = await fetch(
-        "/api/azure/resources/deleteresourcegroupappservice",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-          },
-          body: JSON.stringify({
-            tagKey: "user",
-            tagValue: user_az_id,
-            user_email,
-            resourceGroupName: resourceGroupName,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const successData = await response.text();
-        setMessage(`Success: ${successData}`);
-      } else {
-        const errorData = await response.text();
-        setMessage(`Error: ${errorData}`);
-      }
-    } catch (error) {
-      setMessage(`Error: ${error}`);
-    }
+  // Handle Stripe Payment
+  const handlePayment = async () => {
+    const res = await fetch("/api/stripe/create-checkout-session", {
+      method: "POST",
+    });
+    const { id } = await res.json();
+    const stripe = (await getStripe()) as any;
+    const { error } = await stripe.redirectToCheckout({ sessionId: id });
+    if (error) console.error("Stripe checkout failed:", error);
+    else router.push("/dashboard");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Create Storage Account after payment
+  const handleCreateStorageAccount = async () => {
     setLoading(true);
     setMessage("");
     setAzureOps("create");
-    setContainers([]); // Clear previous container list
+    setContainers([]);
 
     try {
-      let randomName = resourceGroupName; // Start with the current state value
+      let randomName = resourceGroupName;
+      const newTags = { env: "production", user: user_az_id };
 
       // Check if Resource Group Name is empty
       if (resourceGroupName === "") {
@@ -212,8 +152,6 @@ const CreateStorageAccountFormAppService: React.FC = () => {
         randomName = generateRandomName(24); // Generate a new name
         setResourceGroupName(randomName); // Update the state, but it may not reflect immediately
       }
-
-      const newTags = { evn: "production", user: user_az_id };
 
       // Creating Records in Operationstable
       const operation = "create";
@@ -239,7 +177,7 @@ const CreateStorageAccountFormAppService: React.FC = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             resourceGroupName: randomName,
@@ -252,19 +190,112 @@ const CreateStorageAccountFormAppService: React.FC = () => {
           }),
         }
       );
-
       if (response.ok) {
         const successData = await response.text();
-        setMessage(`Success: ${successData}`);
-        checkIfUserHasStorageAccount();
+        // setMessage(`Success: ${successData}`);
+        checkIfUserHasStorageAccount(); // Refresh account state
       } else {
         const errorData = await response.text();
         setMessage(`Error: ${errorData}`);
       }
-    } catch (error) {
-      setMessage(`Error: ${error}`);
+    } catch (error: any) {
+      setMessage(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
+
+  // Delete storage account
+  const handleDeleteStorageAccount = async () => {
+    setLoading(true);
+    setMessage("");
+    setAzureOps("delete");
+    try {
+      // Creating Records in Operationstable
+      const operation = "delete";
+      const value = "pending";
+
+      // Call the function to create a record in the operation table
+      const responseOps = await fetch("/api/azure/resources/manageoperations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          resourceGroupName,
+          operation,
+          value,
+        }),
+      });
+
+      const response = await fetch(
+        "/api/azure/resources/deleteresourcegroupappservice",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            tagKey: "user",
+            tagValue: user_az_id,
+            user_email,
+            resourceGroupName,
+          }),
+        }
+      );
+      if (response.ok) {
+        const successData = await response.text();
+        // setMessage(`Success: ${successData}`);
+        checkIfUserHasStorageAccount(); // Refresh account state
+      } else {
+        const errorData = await response.text();
+        setMessage(`Error: ${errorData}`);
+      }
+    } catch (error: any) {
+      setMessage(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Show confirmation modal before deleting
+  const handleShowModal = () => {
+    setShowModal(true);
+  };
+
+  // Confirm and proceed to delete storage account
+  const confirmDeleteStorageAccount = () => {
+    setShowModal(false);
+    handleDeleteStorageAccount();
+  };
+
+  // Close modal without deleting
+  const closeModal = () => {
+    setShowModal(false);
+  };
+
+  useEffect(() => {
+    checkIfUserHasStorageAccount();
+    checkPaymentStatus();
+    if (session_id) {
+      fetch(`/api/stripe/success?session_id=${session_id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data.message); // Success message
+          setMessage(data.message);
+        });
+    }
+  }, [session]);
+
+  // Überwacht Datenbankwertänderungen
+  useEffect(() => {
+    // Datenbankabfrage alle 5 Sekunden
+    if (loading === false) return; // Nur abfragen, wenn der Ladezustand true ist
+    const intervalId = setInterval(fetchData, 5000);
+
+    return () => clearInterval(intervalId); // Bereinigen, wenn die Komponente unmontiert wird
+  }, [loading === true]);
 
   return (
     <div className="max-w-lg p-6 mx-auto mt-6 bg-gray-400 rounded-lg shadow-md">
@@ -273,12 +304,30 @@ const CreateStorageAccountFormAppService: React.FC = () => {
           ? "You already have a storage account"
           : "Create Storage Account"}
       </h2>
-      {/* Delete Storage Account Button */}
+
+      {!hasStorageAccount && !paid && (
+        <button
+          onClick={handlePayment}
+          className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition mb-4"
+        >
+          Proceed to Payment
+        </button>
+      )}
+
+      {!hasStorageAccount && paid && (
+        <LoadingButton
+          loading={loading}
+          onClick={handleCreateStorageAccount}
+          startlabel="Create Storage Account"
+          loadinglabel="Creating ..."
+        />
+      )}
+
       {hasStorageAccount && (
         <>
           <LoadingButton
             loading={loading}
-            onClick={handleDeleteStorageAccount}
+            onClick={handleShowModal}
             startlabel="Deleting Storage Account"
             loadinglabel="Deleting ..."
           />
@@ -291,20 +340,11 @@ const CreateStorageAccountFormAppService: React.FC = () => {
           </div>
         </>
       )}
-      {!hasStorageAccount && (
-        <LoadingButton
-          loading={loading}
-          onClick={handleSubmit}
-          startlabel="Creating Storage Account"
-          loadinglabel="Creating ..."
-        />
-      )}
 
-      {/* Message display */}
       {message && (
         <p className="mt-4 text-sm font-medium text-center">{message}</p>
       )}
-      {/* Containers list display */}
+
       {containers.length > 0 && (
         <div className="mt-6">
           <h3 className="mb-2 text-lg font-semibold">Containers:</h3>
@@ -315,6 +355,58 @@ const CreateStorageAccountFormAppService: React.FC = () => {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      {/* Confirmation Modal */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6 relative">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                Confirm Deletion
+              </h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            {/* Modal Body */}
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
+              Are you sure you want to delete the storage account? This action
+              is irreversible.
+            </p>
+            {/* Modal Footer */}
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={confirmDeleteStorageAccount}
+                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:ring-4 focus:ring-red-200 dark:focus:ring-red-900"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={closeModal}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:ring-4 focus:ring-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:focus:ring-gray-800"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

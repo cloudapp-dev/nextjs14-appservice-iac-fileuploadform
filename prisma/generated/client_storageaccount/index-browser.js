@@ -147,7 +147,8 @@ exports.Prisma.OperationsScalarFieldEnum = {
   resourcegroup: 'resourcegroup',
   creation: 'creation',
   deletion: 'deletion',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {

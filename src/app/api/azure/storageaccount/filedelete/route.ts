@@ -28,16 +28,6 @@ export async function DELETE(req: NextRequest) {
     );
   }
 
-  console.log("Azure Storage Account Name:", AZURE_STORAGE_ACCOUNT_NAME);
-  console.log("Azure Storage Account Key:", AZURE_STORAGE_ACCOUNT_KEY);
-  console.log("Azure Storage Container Name:", AZURE_STORAGE_CONTAINER_NAME);
-
-  // const {
-  //   AZURE_STORAGE_ACCOUNT_NAME,
-  //   AZURE_STORAGE_ACCOUNT_KEY,
-  //   AZURE_STORAGE_CONTAINER_NAME,
-  // } = process.env;
-
   if (
     !AZURE_STORAGE_ACCOUNT_NAME ||
     !AZURE_STORAGE_ACCOUNT_KEY ||

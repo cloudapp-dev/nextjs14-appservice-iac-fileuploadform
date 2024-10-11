@@ -18,19 +18,9 @@ export async function POST(req: NextRequest) {
 
   const { storageAccountName, accessKey, containerName } = body;
 
-  // console.log("sas Accesskey", accessKey);
-  // console.log("sas storageaccountname", storageAccountName);
-  // console.log("sas containername", containerName);
-
   let AZURE_STORAGE_ACCOUNT_NAME: string = storageAccountName;
   let AZURE_STORAGE_ACCOUNT_KEY: string = accessKey;
   let AZURE_STORAGE_CONTAINER_NAME: string = containerName;
-
-  // const {
-  //   AZURE_STORAGE_ACCOUNT_NAME,
-  //   AZURE_STORAGE_ACCOUNT_KEY,
-  //   AZURE_STORAGE_CONTAINER_NAME,
-  // } = process.env;
 
   if (
     !AZURE_STORAGE_ACCOUNT_NAME ||

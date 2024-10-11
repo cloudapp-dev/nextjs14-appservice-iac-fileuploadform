@@ -18,12 +18,6 @@ export async function DELETE(req: NextRequest) {
   let AZURE_STORAGE_ACCOUNT_KEY: string = accessKey;
   let AZURE_STORAGE_CONTAINER_NAME: string = containerName;
 
-  // const {
-  //   AZURE_STORAGE_ACCOUNT_NAME,
-  //   AZURE_STORAGE_ACCOUNT_KEY,
-  //   AZURE_STORAGE_CONTAINER_NAME,
-  // } = process.env;
-
   if (
     !AZURE_STORAGE_ACCOUNT_NAME ||
     !AZURE_STORAGE_ACCOUNT_KEY ||

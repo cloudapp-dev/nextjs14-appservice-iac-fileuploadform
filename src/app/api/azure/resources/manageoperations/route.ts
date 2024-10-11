@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
           },
           data: {
             creation: creationvalue,
+            updatedAt: new Date(),
           },
         });
       } else if (operation === "delete") {
@@ -67,6 +68,7 @@ export async function POST(req: NextRequest) {
           },
           data: {
             deletion: deleteionvalue,
+            updatedAt: new Date(),
           },
         });
       }

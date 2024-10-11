@@ -4221,6 +4221,7 @@ export namespace Prisma {
     creation: string | null
     deletion: string | null
     createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type OperationsMaxAggregateOutputType = {
@@ -4229,6 +4230,7 @@ export namespace Prisma {
     creation: string | null
     deletion: string | null
     createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type OperationsCountAggregateOutputType = {
@@ -4237,6 +4239,7 @@ export namespace Prisma {
     creation: number
     deletion: number
     createdAt: number
+    updatedAt: number
     _all: number
   }
 
@@ -4255,6 +4258,7 @@ export namespace Prisma {
     creation?: true
     deletion?: true
     createdAt?: true
+    updatedAt?: true
   }
 
   export type OperationsMaxAggregateInputType = {
@@ -4263,6 +4267,7 @@ export namespace Prisma {
     creation?: true
     deletion?: true
     createdAt?: true
+    updatedAt?: true
   }
 
   export type OperationsCountAggregateInputType = {
@@ -4271,6 +4276,7 @@ export namespace Prisma {
     creation?: true
     deletion?: true
     createdAt?: true
+    updatedAt?: true
     _all?: true
   }
 
@@ -4366,6 +4372,7 @@ export namespace Prisma {
     creation: string
     deletion: string
     createdAt: Date
+    updatedAt: Date
     _count: OperationsCountAggregateOutputType | null
     _avg: OperationsAvgAggregateOutputType | null
     _sum: OperationsSumAggregateOutputType | null
@@ -4393,6 +4400,7 @@ export namespace Prisma {
     creation?: boolean
     deletion?: boolean
     createdAt?: boolean
+    updatedAt?: boolean
   }, ExtArgs["result"]["operations"]>
 
   export type OperationsSelectScalar = {
@@ -4401,6 +4409,7 @@ export namespace Prisma {
     creation?: boolean
     deletion?: boolean
     createdAt?: boolean
+    updatedAt?: boolean
   }
 
 
@@ -4414,6 +4423,7 @@ export namespace Prisma {
       creation: string
       deletion: string
       createdAt: Date
+      updatedAt: Date
     }, ExtArgs["result"]["operations"]>
     composites: {}
   }
@@ -4839,6 +4849,7 @@ export namespace Prisma {
     readonly creation: FieldRef<"Operations", 'String'>
     readonly deletion: FieldRef<"Operations", 'String'>
     readonly createdAt: FieldRef<"Operations", 'DateTime'>
+    readonly updatedAt: FieldRef<"Operations", 'DateTime'>
   }
     
 
@@ -5178,7 +5189,8 @@ export namespace Prisma {
     resourcegroup: 'resourcegroup',
     creation: 'creation',
     deletion: 'deletion',
-    createdAt: 'createdAt'
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
   };
 
   export type OperationsScalarFieldEnum = (typeof OperationsScalarFieldEnum)[keyof typeof OperationsScalarFieldEnum]
@@ -5452,6 +5464,7 @@ export namespace Prisma {
     creation?: StringFilter<"Operations"> | string
     deletion?: StringFilter<"Operations"> | string
     createdAt?: DateTimeFilter<"Operations"> | Date | string
+    updatedAt?: DateTimeFilter<"Operations"> | Date | string
   }
 
   export type OperationsOrderByWithRelationInput = {
@@ -5460,6 +5473,7 @@ export namespace Prisma {
     creation?: SortOrder
     deletion?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type OperationsWhereUniqueInput = Prisma.AtLeast<{
@@ -5471,6 +5485,7 @@ export namespace Prisma {
     creation?: StringFilter<"Operations"> | string
     deletion?: StringFilter<"Operations"> | string
     createdAt?: DateTimeFilter<"Operations"> | Date | string
+    updatedAt?: DateTimeFilter<"Operations"> | Date | string
   }, "id">
 
   export type OperationsOrderByWithAggregationInput = {
@@ -5479,6 +5494,7 @@ export namespace Prisma {
     creation?: SortOrder
     deletion?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
     _count?: OperationsCountOrderByAggregateInput
     _avg?: OperationsAvgOrderByAggregateInput
     _max?: OperationsMaxOrderByAggregateInput
@@ -5495,6 +5511,7 @@ export namespace Prisma {
     creation?: StringWithAggregatesFilter<"Operations"> | string
     deletion?: StringWithAggregatesFilter<"Operations"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Operations"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Operations"> | Date | string
   }
 
   export type ResourceGroupCreateInput = {
@@ -5660,6 +5677,7 @@ export namespace Prisma {
     creation?: string
     deletion?: string
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type OperationsUncheckedCreateInput = {
@@ -5668,6 +5686,7 @@ export namespace Prisma {
     creation?: string
     deletion?: string
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type OperationsUpdateInput = {
@@ -5675,6 +5694,7 @@ export namespace Prisma {
     creation?: StringFieldUpdateOperationsInput | string
     deletion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OperationsUncheckedUpdateInput = {
@@ -5683,6 +5703,7 @@ export namespace Prisma {
     creation?: StringFieldUpdateOperationsInput | string
     deletion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OperationsCreateManyInput = {
@@ -5691,6 +5712,7 @@ export namespace Prisma {
     creation?: string
     deletion?: string
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type OperationsUpdateManyMutationInput = {
@@ -5698,6 +5720,7 @@ export namespace Prisma {
     creation?: StringFieldUpdateOperationsInput | string
     deletion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OperationsUncheckedUpdateManyInput = {
@@ -5706,6 +5729,7 @@ export namespace Prisma {
     creation?: StringFieldUpdateOperationsInput | string
     deletion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -5974,6 +5998,7 @@ export namespace Prisma {
     creation?: SortOrder
     deletion?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type OperationsAvgOrderByAggregateInput = {
@@ -5986,6 +6011,7 @@ export namespace Prisma {
     creation?: SortOrder
     deletion?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type OperationsMinOrderByAggregateInput = {
@@ -5994,6 +6020,7 @@ export namespace Prisma {
     creation?: SortOrder
     deletion?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type OperationsSumOrderByAggregateInput = {
