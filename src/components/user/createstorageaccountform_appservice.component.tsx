@@ -125,14 +125,15 @@ const CreateStorageAccountFormAppService: React.FC = () => {
 
   // Handle Stripe Payment
   const handlePayment = async () => {
-    const res = await fetch("/api/stripe/create-checkout-session", {
-      method: "POST",
-    });
-    const { id } = await res.json();
-    const stripe = (await getStripe()) as any;
-    const { error } = await stripe.redirectToCheckout({ sessionId: id });
-    if (error) console.error("Stripe checkout failed:", error);
-    else router.push("/dashboard");
+    router.push("/subscriptions");
+    // const res = await fetch("/api/stripe/create-checkout-session", {
+    //   method: "POST",
+    // });
+    // const { id } = await res.json();
+    // const stripe = (await getStripe()) as any;
+    // const { error } = await stripe.redirectToCheckout({ sessionId: id });
+    // if (error) console.error("Stripe checkout failed:", error);
+    // else router.push("/dashboard");
   };
 
   // Create Storage Account after payment
